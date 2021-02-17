@@ -2,6 +2,14 @@
 """
 Test:
 curl -X POST -H "Authentication: KEY" -H "Content-Type: application/json" --data '{"foo":"bar"}' http://127.0.0.1:8888
+
+Run with: 
+python3 hili/server.py \
+  ~/hili_data/annos.json \
+  ~/hili_data/saved_files \
+  -s <ip> \
+  -p <port> \
+  -k '<key>'
 """
 
 import os
@@ -9,16 +17,22 @@ import json
 import base64
 import hashlib
 import argparse
+from pathlib import Path
 from collections import defaultdict
 from http.server import BaseHTTPRequestHandler, HTTPServer
+
 
 parser = argparse.ArgumentParser(description='A simple server to receive and save JSON data')
 parser.add_argument('FILE', type=str, help='File to save received data')
 parser.add_argument('UPLOAD_DIR', type=str, help='Directory to save uploaded files')
+parser.add_argument('-s', '--host', type=str, dest='HOST', default='localhost', help='Hostname of server.')
 parser.add_argument('-p', '--port', type=int, dest='PORT', default=8888, help='Port for server')
 parser.add_argument('-k', '--key', type=str, dest='KEY', default=None, help='Secret key to authenticate clients')
 args = parser.parse_args()
 
+Path(args.FILE).parent.mkdir(exist_ok=True)
+Path(args.UPLOAD_DIR).mkdir(exist_ok=True)
+    
 
 class JSONRequestHandler(BaseHTTPRequestHandler):
     def do_POST(self):
@@ -157,6 +171,6 @@ class JSONRequestHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    print('Running on port', args.PORT)
-    server = HTTPServer(('localhost', args.PORT), JSONRequestHandler)
+    print(f'Server running at: {args.HOST}:{args.PORT}')
+    server = HTTPServer((args.HOST, args.PORT), JSONRequestHandler)
     server.serve_forever()
